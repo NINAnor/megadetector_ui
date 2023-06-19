@@ -3,4 +3,4 @@
 set -euo pipefail
 set -x
 
-docker run --rm- it -p 8999:8999 --gpus all comvis
+docker run --rm -p 8999:8999 --gpus all comvis
