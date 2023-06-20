@@ -1,6 +1,6 @@
 import base64
 import io
-import PIL as Image
+from PIL import Image
 
 def b64_to_pil(content):
     decoded = base64.b64decode(content)
