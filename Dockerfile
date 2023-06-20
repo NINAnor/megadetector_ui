@@ -24,6 +24,7 @@ RUN pip install dash-html-components
 RUN pip install dash-core-components                                     
 RUN pip install plotly
 RUN pip install gunicorn openpyxl
+RUN pip install dash-bootstrap-components
 ################################
 
 # Add model.pt in a megadetector folder

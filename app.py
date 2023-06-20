@@ -1,9 +1,11 @@
 import flask
 import dash
-from dash import dcc, html, Input, Output, State
+import dash_bootstrap_components as dbc
 import os
 import json
 import tempfile
+
+from dash import dcc, html, Input, Output, State
 
 from src.md_json2sqlite import main
 from apputils import b64_to_pil
@@ -15,7 +17,9 @@ UPLOAD_FOLDER = tempfile.mkdtemp(dir=os.getcwd())
 OUTPUT_OBJECT="detection_db.sqlite"
 
 # Application 
-app = dash.Dash(__name__)
+app = dash.Dash(
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 app.title = 'MegaDetector Analysis Dashboard'
 
 app.layout = html.Div([
@@ -40,7 +44,8 @@ app.layout = html.Div([
     ),
     html.Button('Analyze', id='analyze-button', n_clicks=0),
     html.Div(id='results-output'),
-    html.A('Download Results', id='download-button', href='', download='list_of_detections.json', target='_blank')
+    html.Button('Download', id="download-button", n_clicks=0),
+    dcc.Download(id="download-db")
 ])
 
 def md_analyse(json_file, output_name):
@@ -70,37 +75,21 @@ def analyze_folder(n_clicks, contents, filenames):
         img = b64_to_pil(string)
         img.save(temp_path)
 
-    md_analyse(UPLOAD_FOLDER, "list_of_detections.json")
-    to_sqlite("list_of_detections.json", "detection_db.sqlite")
-
-    return "Analysis completed successfully, you can now download the results"
-
+    if n_clicks >= 1:
+        md_analyse(UPLOAD_FOLDER, "list_of_detections.json")
+        to_sqlite("list_of_detections.json", "detection_db.sqlite")
+        return "Images have been properly analysed"
 
 @app.callback(
-    Output('download-button', 'href'),
-    Input('download-button', 'n_clicks'),
-    State('results-output', 'children')
+    Output('download-db', 'data'),
+    Input('download-button', 'n_clicks')
 )
-def generate_download_link(n_clicks, results):
-    if results is not None:
-        # Return the download link to update the href attribute of the download-button
-        download_link = f'/download?filename={OUTPUT_OBJECT}'
-        return download_link
-
-    # If no results are available, return an empty href
-    return ''
-
-
-@app.server.route('/download')
-def download():
-    # Get the filename from the query parameters
-    filename = flask.request.args.get('filename')
-
-    # Generate the file path to the JSON file
-    file_path = os.path.join(os.getcwd(), filename)
-
-    # Return the JSON file for download
-    return flask.send_file(file_path, mimetype='application/sqlite', as_attachment=True)
-
+def dl_db(n_clicks):
+    if n_clicks==1:
+        if os.path.exists(OUTPUT_OBJECT):
+            return dcc.send_file(OUTPUT_OBJECT)
+        else:
+            return "No database has been created"
+    
 if __name__ == '__main__':
     app.run_server(host="0.0.0.0", port=8999, debug=True)
