@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import os
 import json
 import tempfile
+import time
 
 from dash import dcc, html, Input, Output, State
 
@@ -16,6 +17,11 @@ UPLOAD_FOLDER = tempfile.mkdtemp(dir=os.getcwd())
 # Object to be returned
 OUTPUT_OBJECT="detection_db.sqlite"
 
+# Instructions as a list:
+instr= ["Click on the Drag and Drop box below to upload the pictures to be analysed", 
+        "Once this is done click on button 'Analyze'. You should see a spinner indicating that the images are being analyzed.",
+        "Once the spinner disappears you will be able to click on the button 'Download' to get the results as an 'SQLite' database."]
+
 # Application 
 app = dash.Dash(
     external_stylesheets=[dbc.themes.BOOTSTRAP]
@@ -24,6 +30,7 @@ app.title = 'MegaDetector Analysis Dashboard'
 
 app.layout = html.Div([
     html.H1('MegaDetector Analysis Dashboard'),
+    html.Ul(id="instructions", children=[html.Li(i) for i in instr]),
     dcc.Upload(
         id='folder-upload',
         children=html.Div([
@@ -38,21 +45,27 @@ app.layout = html.Div([
             'borderStyle': 'dashed',
             'borderRadius': '5px',
             'textAlign': 'center',
-            'margin': '10px'
+            'margin': '10px',
         },
         multiple=True
     ),
-    html.Button('Analyze', id='analyze-button', n_clicks=0),
-    html.Div(id='results-output'),
-    html.Button('Download', id="download-button", n_clicks=0),
-    dcc.Download(id="download-db")
+    html.Div(
+        children=[
+            html.Button('Analyze', id='analyze-button', n_clicks=0),
+            dcc.Loading(id="loading", children=[html.Div(id='results-output')], type="circle", style={'marginTop': '80px'}), 
+            html.Button('Download', id="download-button", n_clicks=0),
+        ],
+        style={'display': 'flex', 'justifyContent': 'center'}
+    ),
+    dcc.Download(id="download-db"),
+    html.Div(id='output-message', style={'justifyContent': 'center'}) 
 ])
 
-def md_analyse(json_file, output_name):
+def md_analyse(folder, output_name):
     # Accept a .json file of filenames as input
     os.system(f"python /app/CameraTraps/detection/run_detector_batch.py \
                /app/megadetector/md_v5a.0.0.pt \
-              {json_file} \
+              {folder} \
               {output_name}")
     
 def to_sqlite(input_json, output_db):
@@ -60,14 +73,15 @@ def to_sqlite(input_json, output_db):
 
 @app.callback(
     Output('results-output', 'children'),
+    Output('output-message', 'children'),
     Input('analyze-button', 'n_clicks'),
     State('folder-upload', 'contents'),
     Input('folder-upload', 'filename')
 )
 def analyze_folder(n_clicks, contents, filenames):
     if not filenames or not contents:
-        return "Please upload pictures"
-    
+        return " ", " "
+
     for filename, content in zip(filenames, contents):
         # Image is encoded in base64
         temp_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -76,9 +90,20 @@ def analyze_folder(n_clicks, contents, filenames):
         img.save(temp_path)
 
     if n_clicks >= 1:
+        # Initial message to activate the spinner
+        time.sleep(2)  # simulation of delay
+        output_message = "Analyzing ..."
+        
         md_analyse(UPLOAD_FOLDER, "list_of_detections.json")
         to_sqlite("list_of_detections.json", "detection_db.sqlite")
-        return "Images have been properly analysed"
+
+        # A delay to simulate the analysis
+        time.sleep(2)  # simulation of delay
+        output_message = "Images have been properly analysed, you can now download the results"
+
+        return " ", output_message
+    
+    return " ", " "
 
 @app.callback(
     Output('download-db', 'data'),
