@@ -5,14 +5,18 @@ import os
 import json
 import tempfile
 import time
+import shutil
 
 from dash import dcc, html, Input, Output, State
 
 from src.md_json2sqlite import main
-from apputils import b64_to_pil
+from apputils import b64_to_pil, md_analyse, to_sqlite, visualise_bbox
 
 # Create temp folder for image upload
 UPLOAD_FOLDER = tempfile.mkdtemp(dir=os.getcwd())
+
+# Create a temp folder for storing the images with the bbox drawn
+BBOX_FOLDER = tempfile.mkdtemp(dir=os.getcwd())
 
 # Object to be returned
 OUTPUT_OBJECT="detection_db.sqlite"
@@ -53,23 +57,15 @@ app.layout = html.Div([
         children=[
             html.Button('Analyze', id='analyze-button', n_clicks=0),
             dcc.Loading(id="loading", children=[html.Div(id='results-output')], type="circle", style={'marginTop': '80px'}), 
-            html.Button('Download', id="download-button", n_clicks=0),
+            html.Button('Download DB', id="download-button", n_clicks=0),
+            html.Button('Download labelled pics', id='download-pics-button', n_clicks=0)
         ],
         style={'display': 'flex', 'justifyContent': 'center'}
     ),
     dcc.Download(id="download-db"),
+    dcc.Download(id="download-pics"),
     html.Div(id='output-message', style={'justifyContent': 'center'}) 
 ])
-
-def md_analyse(folder, output_name):
-    # Accept a .json file of filenames as input
-    os.system(f"python /app/CameraTraps/detection/run_detector_batch.py \
-               /app/megadetector/md_v5a.0.0.pt \
-              {folder} \
-              {output_name}")
-    
-def to_sqlite(input_json, output_db):
-    main(input_json, output_db, False)
 
 @app.callback(
     Output('results-output', 'children'),
@@ -115,6 +111,19 @@ def dl_db(n_clicks):
             return dcc.send_file(OUTPUT_OBJECT)
         else:
             return "No database has been created"
-    
+        
+@app.callback(
+        Output('download-pics', 'data'),
+        Input('download-pics-button', 'n_clicks')
+)
+def dl_bbox_pics(n_clicks):
+    if n_clicks==1:
+        visualise_bbox("list_of_detections.json", BBOX_FOLDER, UPLOAD_FOLDER)
+        shutil.make_archive('processed_pics.zip', 'zip', BBOX_FOLDER)
+        if os.path.exists('processed_pics.zip'):
+            return dcc.send_file('processed_pics.zip')
+        else:
+            return "No pictures have been processed"
+
 if __name__ == '__main__':
     app.run_server(host="0.0.0.0", port=8999, debug=True)
