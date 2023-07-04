@@ -23,10 +23,7 @@ def to_sqlite(input_json, output_db):
     main(input_json, output_db, False)
 
 def visualise_bbox(detection_json, outfolder, infolder):
-    import subprocess
-    subprocess.run(["python", 
-                    "/app/CameraTraps/visualization/visualize_detector_output.py", 
-                    detection_json, 
-                    outfolder, 
-                    "-c", "0.8",
-                    "-i", infolder])
+    os.system(f"python /app/CameraTraps/visualization/visualize_detector_output.py \
+              {detection_json} \
+              {outfolder} \
+              -i {infolder}")

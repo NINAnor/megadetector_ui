@@ -117,11 +117,12 @@ def dl_db(n_clicks):
         Input('download-pics-button', 'n_clicks')
 )
 def dl_bbox_pics(n_clicks):
-    if n_clicks==1:
+    if n_clicks>=1:
         visualise_bbox("list_of_detections.json", BBOX_FOLDER, UPLOAD_FOLDER)
-        shutil.make_archive('processed_pics.zip', 'zip', BBOX_FOLDER)
-        if os.path.exists('processed_pics.zip'):
-            return dcc.send_file('processed_pics.zip')
+        zip_filename = shutil.make_archive('processed_pics', 'zip', BBOX_FOLDER)  # Note that I removed the '.zip' extension here, as make_archive adds it itself
+
+        if os.path.exists(zip_filename):
+            return dcc.send_file(zip_filename)
         else:
             return "No pictures have been processed"
 

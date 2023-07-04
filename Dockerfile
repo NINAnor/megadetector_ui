@@ -42,7 +42,7 @@ RUN git clone https://github.com/ultralytics/yolov5.git && \
 
 RUN git clone https://github.com/microsoft/CameraTraps.git && \
     cd /app/CameraTraps &&  \
-    git checkout b357366183c72c76eb9c4cd84166c3c9b2f84af5
+    git checkout a1e7c154b43f0982d2f41ffa9359daac666557fb
 
 # Clone the repo that converts the .json file into an sqlite database
 RUN git clone https://github.com/NINAnor/md_json2sqlite
