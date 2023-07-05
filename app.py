@@ -27,10 +27,12 @@ BBOX_FOLDER = tempfile.mkdtemp(dir=os.getcwd())
 OUTPUT_OBJECT="detection_db.sqlite"
 
 # Instructions as a list:
-instr= ["Click on the Drag and Drop box below to upload the pictures to be analysed", 
-        "Once this is done click on button 'Analyze'. You should see a spinner indicating that the images are being analyzed.",
-        "Once the spinner disappears you will be able to click on the button 'Download' to get the results as an 'SQLite' database.",
-        "It is also possible to download the processed images (i.e. displaying the bounding box by clicking on the button 'Download labelled pics')"]
+instr = [
+    html.B("1. UPLOAD PICTURES: "), "Click on the Drag and Drop box below",
+    html.B("2. ANALYZE: "), "Click 'Analyze'. You should see a spinner indicating that the images are being analyzed.",
+    html.B("3. DOWNLOAD DATABASE: "), "Once the analysis is finished, click on the button 'Download' to get the results as an 'SQLite' database.",
+    html.B("4. (optional) DOWNLOAD PICS WITH LABEL: "), "To download the processed images (i.e., displaying the bounding box) click on the button 'Download labelled pics'."
+]
 
 # Application 
 app = dash.Dash(
@@ -40,7 +42,17 @@ app.title = 'MegaDetector Analysis Dashboard'
 
 app.layout = html.Div([
     html.H1('MegaDetector Analysis Dashboard'),
-    html.Ul(id="instructions", children=[html.Li(i) for i in instr]),
+    dbc.Alert(
+        [
+            html.Ul(
+                id="instructions",
+                children=[html.Li([html.B(instr[i]), instr[i+1]]) for i in range(0, len(instr), 2)],
+                className="list-unstyled mb-0",
+            )
+        ],
+        color="primary",
+        className="mb-4",
+    ),
     dcc.Upload(
         id='folder-upload',
         children=html.Div([
