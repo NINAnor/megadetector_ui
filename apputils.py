@@ -1,11 +1,15 @@
 import base64
 import io
 import os
+import dash_bootstrap_components as dbc
 
 from PIL import Image
 
 from src.md_json2sqlite import main
 
+#####################
+# Backend functions #
+#####################
 def b64_to_pil(content):
     decoded = base64.b64decode(content)
     buffer = io.BytesIO(decoded)
@@ -27,3 +31,26 @@ def visualise_bbox(detection_json, outfolder, infolder):
               {detection_json} \
               {outfolder} \
               -i {infolder}")
+
+#######################
+# Front-end functions #
+#######################
+def alert_msg(message):
+    alert_message = dbc.Alert(
+        message,
+        color='danger',
+        dismissable=True,
+        duration=None,  
+        id='error-alert'
+    )
+    return alert_message
+
+def info_msg(message):
+    info_message = dbc.Alert(
+        message,
+        color='success',
+        dismissable=True,
+        duration=None,  
+        id='info-alert'
+    )
+    return info_message
