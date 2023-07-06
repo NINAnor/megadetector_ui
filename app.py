@@ -1,7 +1,6 @@
 import flask
 import dash
 import dash_bootstrap_components as dbc
-import dash.exceptions as dex
 import os
 import json
 import tempfile
@@ -13,9 +12,8 @@ from dash import dcc, html, Input, Output, State
 from src.md_json2sqlite import main
 
 # Backend functions
-from apputils import b64_to_pil, md_analyse, to_sqlite, visualise_bbox
-# Frontend functions
-from apputils import alert_msg, info_msg
+from utils_analysis import visualise_bbox, copy_temp_imgs, analyze_imgs
+from utils_ui import alert_msg
 
 # Create temp folder for image upload
 UPLOAD_FOLDER = tempfile.mkdtemp(dir=os.getcwd())
@@ -110,22 +108,11 @@ def analyze_folder(n_clicks, contents, filenames, info_m, alert_pics):
         else:
             return '', '', ''
 
-    for filename, content in zip(filenames, contents):
-        # Image is encoded in base64
-        temp_path = os.path.join(UPLOAD_FOLDER, filename)
-        string = content.split(';base64,')[-1]
-        img = b64_to_pil(string)
-        img.save(temp_path)
+    copy_temp_imgs(UPLOAD_FOLDER, filenames, contents)
 
     if n_clicks >= 1:
         
-        time.sleep(2)  # simulation of delay
-
-        md_analyse(UPLOAD_FOLDER, "list_of_detections.json")
-        to_sqlite("list_of_detections.json", "detection_db.sqlite")
-
-        time.sleep(2)  # simulation of delay
-        info_m = info_msg("The images have been successfully analyzed! You can now download the result.")
+        info_m = analyze_imgs(UPLOAD_FOLDER, "list_of_detections.json", OUTPUT_OBJECT)
 
         if info_m and 'info-alert.dismissed' in dash.callback_context.triggered[0]['prop_id']:
             return None, html.Div(), html.Div()   # Dismiss the alert message

@@ -1,15 +1,27 @@
 import base64
 import io
 import os
-import dash_bootstrap_components as dbc
 
 from PIL import Image
 
 from src.md_json2sqlite import main
 
-#####################
-# Backend functions #
-#####################
+from utils_ui import info_msg
+
+def copy_temp_imgs(UPLOAD_FOLDER, filenames, contents):
+    for filename, content in zip(filenames, contents):
+        # Image is encoded in base64
+        temp_path = os.path.join(UPLOAD_FOLDER, filename)
+        string = content.split(';base64,')[-1]
+        img = b64_to_pil(string)
+        img.save(temp_path)
+
+def analyze_imgs(UPLOAD_FOLDER, list_of_detections, sqlite_db):
+    md_analyse(UPLOAD_FOLDER, list_of_detections)
+    to_sqlite(list_of_detections, sqlite_db)
+    info_m = info_msg("The images have been successfully analyzed! You can now download the result.")
+    return info_m
+
 def b64_to_pil(content):
     decoded = base64.b64decode(content)
     buffer = io.BytesIO(decoded)
@@ -31,26 +43,3 @@ def visualise_bbox(detection_json, outfolder, infolder):
               {detection_json} \
               {outfolder} \
               -i {infolder}")
-
-#######################
-# Front-end functions #
-#######################
-def alert_msg(message):
-    alert_message = dbc.Alert(
-        message,
-        color='danger',
-        dismissable=True,
-        duration=None,  
-        id='error-alert'
-    )
-    return alert_message
-
-def info_msg(message):
-    info_message = dbc.Alert(
-        message,
-        color='success',
-        dismissable=True,
-        duration=None,  
-        id='info-alert'
-    )
-    return info_message

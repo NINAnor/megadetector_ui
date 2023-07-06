@@ -52,7 +52,7 @@ COPY ./ /app/
 
 
 # Change PYTHONPATH
-ENV PYTHONPATH "$PYTHONPATH:/app/CameraTraps:/app/ai4eutils:/app/yolov5:/app/md_json2sqlite"
+ENV PYTHONPATH "$PYTHONPATH:/app/CameraTraps:/app/ai4eutils:/app/yolov5:/app/md_json2sqlite:/app/utils"
 
 CMD [ "python", "app.py" ]
 
